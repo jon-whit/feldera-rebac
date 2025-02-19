@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package authorizer.v1alpha1;
+
+option go_package = "github.com/jon-whit/feldera-rebac/protos/authorizer/v1alpha1;v1alpha1";
+
+message Schema {
+    map<string, TypeDefinition> type_definitions = 1;
+}
+
+message TypeDefinition {
+    string name = 1;
+    map<string, Relation> relations = 2;
+    map<string, Permission> permissions = 3;
+}
+
+message Relation {
+    string name = 1;
+    repeated RelationTypeRestriction type_restrictions = 2;
+}
+
+message RelationTypeRestriction {
+    string resource_type = 1;
+    string relation = 2;
+}
+
+message Permission {
+    string name = 1;
+    PermissionExpressionRef expression = 2;
+}
+
+message PermissionExpressionRef {
+    oneof expression {
+        UnaryPermissionExpression unary_expression = 1;
+        HierarchicalPermissionExpression hierarchical_expression = 2;
+        PermissionSetExpressionRef set_expression = 3;
+    }
+}
+
+message UnaryPermissionExpression {
+    string source_relation = 1;
+}
+
+message HierarchicalPermissionExpression {
+    string base = 1;
+    string target = 2;
+}
+
+message PermissionSetExpressionRef {
+    oneof set_expression {
+        Union union = 1;
+        Intersection intersection = 2;
+    }
+
+    message Union {
+        repeated PermissionExpressionRef operands = 1;
+    }
+
+    message Intersection {
+        repeated PermissionExpressionRef operands = 2;
+    }
+}

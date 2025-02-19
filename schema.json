@@ -1,0 +1,51 @@
+{
+    "type_definitions": {
+      "account": {
+        "name": "account"
+      },
+      "subreddit": {
+        "name": "subreddit",
+        "relations": {
+          "moderator": {
+            "name": "moderator",
+            "type_restrictions": [
+              {
+                "resource_type": "account"
+              }
+            ]
+          },
+          "community_appearance_editor": {
+            "name": "community_appearance_editor",
+            "type_restrictions": [
+              {
+                "resource_type": "account"
+              }
+            ]
+          }
+        },
+        "permissions": {
+          "can_edit_community_appearance": {
+            "name": "can_edit_community_appearance",
+            "expression": {
+              "set_expression": {
+                "union": {
+                  "operands": [
+                    {
+                      "unary_expression": {
+                        "source_relation": "moderator"
+                      }
+                    },
+                    {
+                      "unary_expression": {
+                        "source_relation": "community_appearance_editor"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
