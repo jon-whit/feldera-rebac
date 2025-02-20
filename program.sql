@@ -64,4 +64,17 @@ ON
     relationships.subject_type = type_restrictions.subject_type AND
     relationships.subject_relation = type_restrictions.subject_relation
 UNION ALL
+SELECT
+    derived_relationships.subject_type,
+    derived_relationships.subject_id,
+    derived_relationships.subject_relation,
+    relationships.resource_type,
+    relationships.resource_id,
+    relationships.relationship
+FROM derived_relationships, relationships 
+WHERE
+    derived_relationships.resource_type = relationships.subject_type AND 
+    derived_relationships.resource_id = relationships.subject_id AND
+    derived_relationships.relationship = relationships.subject_relation
+UNION ALL
 SELECT * FROM derived_unary_relationships;
