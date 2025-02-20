@@ -1,0 +1,48 @@
+{
+    "type_definitions": {
+      "user": {
+        "name": "user"
+      },
+      "group": {
+        "name": "group",
+        "relations": {
+          "member": {
+            "name": "member",
+            "type_restrictions": [
+              {
+                "resource_type": "user"
+              },
+              {
+                "resource_type": "group",
+                "relation": "member"
+              }
+            ]
+          }
+        }
+      },
+      "document": {
+        "name": "document",
+        "relations": {
+          "viewer": {
+            "name": "viewer",
+            "type_restrictions": [
+              {
+                "resource_type": "group",
+                "relation": "member"
+              }
+            ]
+          }
+        },
+        "permissions": {
+          "can_view": {
+            "name": "can_view",
+            "expression": {
+              "unary_expression": {
+                "source_relation": "viewer"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
