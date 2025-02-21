@@ -20,7 +20,7 @@ func (s SchemaQueryRules) ToSQL() string {
 		sql += "INSERT INTO type_restrictions VALUES\n"
 		for i, typeRestriction := range s.RelationTypeRestrictions {
 			if i == len(s.RelationTypeRestrictions)-1 {
-				sql += fmt.Sprintf("('%s', '%s', '%s', '%s');\n\n", typeRestriction.ResourceType, typeRestriction.Relation, typeRestriction.SubjectType, typeRestriction.SubjectRelation)
+				sql += fmt.Sprintf("('%s', '%s', '%s', '%s');", typeRestriction.ResourceType, typeRestriction.Relation, typeRestriction.SubjectType, typeRestriction.SubjectRelation)
 			} else {
 				sql += fmt.Sprintf("('%s', '%s', '%s', '%s'),\n", typeRestriction.ResourceType, typeRestriction.Relation, typeRestriction.SubjectType, typeRestriction.SubjectRelation)
 			}
@@ -28,12 +28,27 @@ func (s SchemaQueryRules) ToSQL() string {
 	}
 
 	if len(s.UnaryRules) > 0 {
+		sql += "\n\n"
+
 		sql += "INSERT INTO unary_rules VALUES\n"
 		for i, unaryRule := range s.UnaryRules {
 			if i == len(s.UnaryRules)-1 {
 				sql += fmt.Sprintf("('%s', '%s', '%s');", unaryRule.ResourceType, unaryRule.SourceRelation, unaryRule.DerivedRelation)
 			} else {
 				sql += fmt.Sprintf("('%s', '%s', '%s'),\n", unaryRule.ResourceType, unaryRule.SourceRelation, unaryRule.DerivedRelation)
+			}
+		}
+	}
+
+	if len(s.BinaryRules) > 0 {
+		sql += "\n\n"
+
+		sql += "INSERT INTO binary_rules VALUES\n"
+		for i, binaryRule := range s.BinaryRules {
+			if i == len(s.BinaryRules)-1 {
+				sql += fmt.Sprintf("('%s', '%s', '%s', '%s', '%s');", binaryRule.FirstResourceType, binaryRule.FirstRelation, binaryRule.SecondResourceType, binaryRule.SecondRelation, binaryRule.DerivedRelation)
+			} else {
+				sql += fmt.Sprintf("('%s', '%s', '%s', '%s', '%s'),\n", binaryRule.FirstResourceType, binaryRule.FirstRelation, binaryRule.SecondResourceType, binaryRule.SecondRelation, binaryRule.DerivedRelation)
 			}
 		}
 	}

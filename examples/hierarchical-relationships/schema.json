@@ -1,0 +1,76 @@
+{
+    "type_definitions": {
+      "user": {
+        "name": "user"
+      },
+      "folder": {
+        "name": "folder",
+        "relations": {
+          "parent": {
+            "name": "parent",
+            "type_restrictions": [
+              {
+                "resource_type": "folder"
+              }
+            ]
+          },
+          "viewer": {
+            "name": "viewer",
+            "type_restrictions": [
+              {
+                "resource_type": "user"
+              }
+            ]
+          }
+        },
+        "permissions": {
+          "can_view": {
+            "name": "can_view",
+            "expression": {
+              "set_expression": {
+                "union": {
+                  "operands": [
+                    {
+                      "hierarchical_expression": {
+                        "base": "parent",
+                        "target": "can_view"
+                      }
+                    },
+                    {
+                      "unary_expression": {
+                        "source_relation": "viewer"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "document": {
+        "name": "document",
+        "relations": {
+          "parent": {
+            "name": "parent",
+            "type_restrictions": [
+              {
+                "resource_type": "folder"
+              }
+            ]
+          }
+        },
+        "permissions": {
+          "can_view": {
+            "name": "can_view",
+            "expression": {
+              "hierarchical_expression": {
+                "base": "parent",
+                "target": "can_view"
+              }
+            }
+          }
+        }
+      }
+    }
+  }

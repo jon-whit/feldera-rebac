@@ -59,12 +59,14 @@ func mapSchemaToQueryRules(schema *authorizerpb.Schema) SchemaQueryRules {
 }
 
 func expandPermissionExpressionRef(
-	resourceType string,
+	typedef *authorizerpb.TypeDefinition,
 	permissionName string,
 	exp *authorizerpb.PermissionExpressionRef,
 ) ([]UnaryRule, []BinaryRule) {
 	var unaryRules []UnaryRule
 	var binaryRules []BinaryRule
+
+	resourceType := typedef.GetName()
 
 	switch permissionExp := exp.GetExpression().(type) {
 	case *authorizerpb.PermissionExpressionRef_UnaryExpression:
@@ -75,8 +77,24 @@ func expandPermissionExpressionRef(
 		}
 		unaryRules = append(unaryRules, rule)
 	case *authorizerpb.PermissionExpressionRef_HierarchicalExpression:
+		// get the type restrictions for base relation (e.g. parent)
+		baseRelationName := permissionExp.HierarchicalExpression.GetBase()
+		baseRelation, ok := typedef.GetRelations()[baseRelationName]
+		if !ok {
+			panic(fmt.Sprintf("undefined relation '%s'", baseRelationName))
+		}
+
+		for _, typeRestriction := range baseRelation.GetTypeRestrictions() {
+			binaryRules = append(binaryRules, BinaryRule{
+				FirstResourceType:  typeRestriction.GetResourceType(),
+				FirstRelation:      permissionExp.HierarchicalExpression.GetTarget(),
+				SecondResourceType: resourceType,
+				SecondRelation:     baseRelationName,
+				DerivedRelation:    permissionName,
+			})
+		}
 	case *authorizerpb.PermissionExpressionRef_SetExpression:
-		unary, binary := expandSetExpression(resourceType, permissionName, permissionExp.SetExpression)
+		unary, binary := expandSetExpression(typedef, permissionName, permissionExp.SetExpression)
 		unaryRules = append(unaryRules, unary...)
 		binaryRules = append(binaryRules, binary...)
 	default:
@@ -87,7 +105,7 @@ func expandPermissionExpressionRef(
 }
 
 func expandSetExpression(
-	resourceType string,
+	typedef *authorizerpb.TypeDefinition,
 	permissionName string,
 	setExp *authorizerpb.PermissionSetExpressionRef,
 ) ([]UnaryRule, []BinaryRule) {
@@ -97,7 +115,7 @@ func expandSetExpression(
 	switch exp := setExp.SetExpression.(type) {
 	case *authorizerpb.PermissionSetExpressionRef_Union_:
 		for _, operand := range exp.Union.Operands {
-			operandUnaryRules, operandBinaryRules := expandPermissionExpressionRef(resourceType, permissionName, operand)
+			operandUnaryRules, operandBinaryRules := expandPermissionExpressionRef(typedef, permissionName, operand)
 			unaryRules = append(unaryRules, operandUnaryRules...)
 			binaryRules = append(binaryRules, operandBinaryRules...)
 		}
@@ -114,11 +132,11 @@ func rules(schema *authorizerpb.Schema) ([]UnaryRule, []BinaryRule) {
 	var unaryRules []UnaryRule
 	var binaryRules []BinaryRule
 
-	for typeName, typeDefinition := range schema.GetTypeDefinitions() {
+	for _, typeDefinition := range schema.GetTypeDefinitions() {
 		for permissionName, permission := range typeDefinition.GetPermissions() {
 
 			permissionExp := permission.GetExpression()
-			unary, binary := expandPermissionExpressionRef(typeName, permissionName, permissionExp)
+			unary, binary := expandPermissionExpressionRef(typeDefinition, permissionName, permissionExp)
 			unaryRules = append(unaryRules, unary...)
 			binaryRules = append(binaryRules, binary...)
 		}
