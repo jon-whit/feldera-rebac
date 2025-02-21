@@ -81,7 +81,27 @@ SELECT * FROM derived_relationships;
 
 ## Coming Soon..
 * Support for intersection rules `viewer(subject, object), allowed(subject, object) :- can_view(subject, object)`
-* Support for hierarchical rules `viewer(subject, object1), parent(object1, object2) :- can_view(subject, object2)`
 * Support for negated rules `viewer(subject, object), !restricted(subject, object) :- can_view(subject, object)`
 * Support for bidirectional rules `blocks(subject, object) :- blocked_by(object, subject)`
 * Support for composite relationship definitions of the form `can_view = (viewer or editor) but not restricted`. This will include  support for nested expressions with arbitrary parenthetical groupings. To do this we will need "composite terms", or terms in the rules that refer to a compound definition.
+
+## Limitations
+* Support has not yet been added to composite/compound permission definitions, see the [Coming Soon..](#coming-soon) mentioned above. This means that models like the one shown below are not supported. 
+
+  Work needs to be done to convert an n-ary permission expression tree into a binary permission expression tree. To do that we will need to introduce some intermediate or composite terms in the unary and binary rules tables. This is similar to a sort of hub/spoke style model where the hub is the composite term and the spokes are the individual operands of the composite definition. In this example the composite permission `can_view` is composed of two hubs `(viewer or editor)` (let's call this `__viewer_or_editor__`) and the other hub `(__viewer_or_editor__) and allowed` (let's call this `__viewer_or_editor__and__allowed__`).
+  
+  The composite rule for `can_view` can be rewritten as the composition of the two hub terms, namely `(__viewer_or_editor__and__allowed__ but not restricted)`
+```
+typedef user {}
+
+typedef document {
+  relation viewer: [user]
+  relation restricted: [user]
+  relation editor: [user]
+  relation allowed: [user]
+
+  permission can_view = ((viewer or editor) and allowed) but not restricted
+}
+```
+
+* There currently isn't a bound to the recursion depth, so if certain relationships would cause infinite recursion then Feldera will 💥. There is an [open issue](https://github.com/feldera/feldera/issues/3318) to add a recursion depth limit for recursive SQL queries in Feldera.
