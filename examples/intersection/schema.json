@@ -1,0 +1,51 @@
+{
+    "type_definitions": {
+      "user": {
+        "name": "user"
+      },
+      "document": {
+        "name": "document",
+        "relations": {
+          "viewer": {
+            "name": "viewer",
+            "type_restrictions": [
+              {
+                "resource_type": "user"
+              }
+            ]
+          },
+          "allowed": {
+            "name": "allowed",
+            "type_restrictions": [
+              {
+                "resource_type": "user"
+              }
+            ]
+          }
+        },
+        "permissions": {
+          "can_view": {
+            "name": "can_view",
+            "expression": {
+              "set_expression": {
+                "intersection": {
+                  "operands": [
+                    {
+                      "unary_expression": {
+                        "source_relation": "viewer"
+                      }
+                    },
+                    {
+                      "unary_expression": {
+                        "source_relation": "allowed"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }

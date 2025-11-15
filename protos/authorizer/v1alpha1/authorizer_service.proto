@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package authorizer.v1alpha1;
+
+option go_package = "github.com/jon-whit/feldera-rebac/protos/authorizer/v1alpha1;v1alpha1";
+
+service AuthorizerService {
+    rpc Check(CheckRequest) returns (CheckResponse) {}
+}
+
+message CheckRequest {
+    string resource_type = 1;
+    repeated string resource_ids = 2;
+    string relation = 3;
+    string subject_type = 4;
+    string subject_id = 5;
+}
+
+message CheckResponse {
+    map<string, CheckResult> results_by_resource_id = 1;
+}
+
+message CheckResult {
+    bool has_relation = 1;
+}

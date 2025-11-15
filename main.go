@@ -120,7 +120,15 @@ func expandSetExpression(
 			binaryRules = append(binaryRules, operandBinaryRules...)
 		}
 	case *authorizerpb.PermissionSetExpressionRef_Intersection_:
-		panic("intersection is not yet a supported PermissionSetExpression")
+		if len(exp.Intersection.Operands) != 2 {
+			panic("intersection must have exactly two operands")
+		}
+
+		for _, operand := range exp.Intersection.Operands {
+			operandUnaryRules, operandBinaryRules := expandPermissionExpressionRef(typedef, permissionName, operand)
+			unaryRules = append(unaryRules, operandUnaryRules...)
+			binaryRules = append(binaryRules, operandBinaryRules...)
+		}
 	default:
 		panic("unexpected PermissionSetExpression type")
 	}
@@ -136,7 +144,7 @@ func rules(schema *authorizerpb.Schema) ([]UnaryRule, []BinaryRule) {
 		for permissionName, permission := range typeDefinition.GetPermissions() {
 
 			permissionExp := permission.GetExpression()
-			unary, binary := expandPermissionExpressionRef(typeDefinition, permissionName, permissionExp)
+			_, unary, binary := expandPermissionExpressionRefV2(schema, typeDefinition, permissionName, permissionExp)
 			unaryRules = append(unaryRules, unary...)
 			binaryRules = append(binaryRules, binary...)
 		}

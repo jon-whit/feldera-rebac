@@ -7,24 +7,71 @@ CREATE TABLE relationships (
     resource_type id_t not null,
     resource_id id_t not null,
     relationship id_t not null
+) WITH (
+    'materialized' = 'true',
+    'connectors' = '[{
+    "transport": {
+      "name": "postgres_input",
+      "config": {
+        "uri": "postgresql://postgres:password@postgres:5432/postgres",
+        "query": "select subject_type, subject_id, subject_relation, resource_type, resource_id, relationship from relationships;"
+      }
+    }
+  }]'
 );
+
 CREATE TABLE type_restrictions (
 	resource_type id_t not null,
 	relation id_t not null,
 	subject_type id_t not null,
 	subject_relation id_t not null
+) WITH (
+    'materialized' = 'true',
+    'connectors' = '[{
+    "transport": {
+      "name": "postgres_input",
+      "config": {
+        "uri": "postgresql://postgres:password@postgres:5432/postgres",
+        "query": "select resource_type, relation, subject_type, subject_relation from type_restrictions;"
+      }
+    }
+  }]'
 );
+
 CREATE TABLE unary_rules (
     resource_type id_t not null,
     prerequisite_relationship id_t not null,
     derived_relationship id_t not null
+) WITH (
+    'materialized' = 'true',
+    'connectors' = '[{
+    "transport": {
+      "name": "postgres_input",
+      "config": {
+        "uri": "postgresql://postgres:password@postgres:5432/postgres",
+        "query": "select resource_type, prerequisite_relationship, derived_relationship from unary_rules;"
+      }
+    }
+  }]'
 );
+
 CREATE TABLE binary_rules (
     prerequisite1_resource_type id_t not null,
     prerequisite1_relationship id_t not null,
     prerequisite2_resource_type id_t not null,
     prerequisite2_relationship id_t not null,
     derived_relationship id_t not null
+) WITH (
+    'materialized' = 'true',
+    'connectors' = '[{
+    "transport": {
+      "name": "postgres_input",
+      "config": {
+        "uri": "postgresql://postgres:password@postgres:5432/postgres",
+        "query": "select prerequisite1_resource_type, prerequisite1_relationship, prerequisite2_resource_type, prerequisite2_relationship, derived_relationship from binary_rules;"
+      }
+    }
+  }]'
 );
 
 DECLARE RECURSIVE VIEW derived_unary_relationships (
@@ -104,7 +151,40 @@ WHERE
     (lhs.resource_type = rhs.resource_type AND lhs.resource_id = rhs.resource_id) OR
     (lhs.resource_type = rhs.subject_type AND lhs.resource_id = rhs.subject_id);
 
-CREATE MATERIALIZED VIEW derived_relationships AS
+CREATE MATERIALIZED VIEW derived_relationships WITH (
+'connectors' = '[
+  {
+    "transport": {
+      "name": "redis_output",
+      "config": {
+        "connection_string": "redis://redis:6379/0",
+        "key_separator": ":"
+      }
+    },
+    "format": {
+        "name": "json",
+        "config": {
+          "key_fields": ["subject_type","subject_id","subject_relation", "relationship", "resource_type", "resource_id"]
+        }
+    }
+  },
+  {
+    "transport": {
+      "name": "redis_output",
+      "config": {
+        "connection_string": "redis://redis:6379/0",
+        "key_separator": ":"
+      }
+    },
+    "format": {
+        "name": "json",
+        "config": {
+          "key_fields": ["resource_type","resource_id","relationship", "subject_type", "subject_relation", "subject_id"]
+        }
+    }
+  }
+]'
+) AS
 SELECT 
     relationships.subject_type,
     relationships.subject_id,

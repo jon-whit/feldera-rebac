@@ -1,0 +1,46 @@
+services:
+  authorizer:
+    build: .
+    restart: no
+    ports:
+      - "9090:9090"
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+  feldera:
+    image: ghcr.io/feldera/pipeline-manager:0.39.0
+    restart: always
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl --fail --request GET --url http://localhost:8080/healthz"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  redis:
+    image: redis:latest
+    restart: always
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+    ports:
+      - "6379:6379"
+    volumes:
+      - 'redis_data:/bitnami/redis/data'
+
+volumes:
+  db_data:
+  redis_data:
+    driver: local
