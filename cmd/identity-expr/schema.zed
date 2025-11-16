@@ -16,4 +16,5 @@ definition post {
     //permission view = blah & (aaa & bbb) + (ccc & ddd)
     permission blah = ancestor->view + aaa
     permission foo = ancestor->view & bbb
+    permission neg = ancestor->view - bbb
 }

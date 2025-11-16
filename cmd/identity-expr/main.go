@@ -70,6 +70,7 @@ type UnaryRule struct {
 func (u *UnaryRule) isExprRule() {}
 
 type BinaryRule struct {
+	Negated            bool
 	FirstResourceType  string `json:"first_resource_type"`
 	FirstRelation      string `json:"first_relation"`
 	SecondResourceType string `json:"second_resource_type"`
@@ -207,8 +208,31 @@ func (v *visitor) VisitPermission(p *schemav2.Permission, value []ExprRule) ([]E
 			DerivedRelation:    derivedRelation,
 		})
 
-	//case *schemav2.ExclusionOperation:
-	// produce a negated binary rule for the children
+	case *schemav2.ExclusionOperation:
+		// produce a negated binary rule for the children
+		leftOp, rightOp := op.Left(), op.Right()
+
+		left, ok := leftOp.(*schemav2.ResolvedRelationReference)
+		if !ok {
+			return nil, false, fmt.Errorf("expected a resolved relation reference")
+		}
+
+		right, ok := rightOp.(*schemav2.ResolvedRelationReference)
+		if !ok {
+			return nil, false, fmt.Errorf("expected a resolved relation reference")
+		}
+
+		sourceType := p.Parent().Name()
+		derivedRelation := p.Name()
+
+		v.rules = append(v.rules, &BinaryRule{
+			Negated:            true,
+			FirstResourceType:  sourceType,
+			FirstRelation:      left.RelationName(),
+			SecondResourceType: sourceType,
+			SecondRelation:     right.RelationName(),
+			DerivedRelation:    derivedRelation,
+		})
 
 	default:
 		return nil, false, fmt.Errorf("unsupported operation type: %T", op)

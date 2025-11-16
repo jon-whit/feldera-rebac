@@ -38,7 +38,9 @@ create table binary_rules (
 );
 
 create table negated_binary_rules (
+   prerequisite1_resource_type id_t not null,
    prerequisite1_relationship id_t not null,
+   prerequisite2_resource_type id_t not null,
    prerequisite2_relationship id_t not null,
    derived_relationship id_t not null
 );
