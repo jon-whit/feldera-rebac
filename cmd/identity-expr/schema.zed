@@ -1,0 +1,19 @@
+definition user{}
+
+definition subreddit {
+    relation viewer: user
+
+    permission view = viewer
+}
+
+definition post {
+    relation aaa: user
+    relation bbb: user
+    relation ccc: user
+    relation ddd: user
+    relation ancestor: subreddit
+
+    //permission view = blah & (aaa & bbb) + (ccc & ddd)
+    permission blah = ancestor->view + aaa
+    permission foo = ancestor->view & bbb
+}
